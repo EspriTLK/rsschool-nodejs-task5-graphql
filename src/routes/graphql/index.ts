@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
-import { graphql, GraphQLID, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import { graphql, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
 import { graphqlBodySchema } from './schema';
 // import { gqlSchema } from './gql.schema';
 // import { FastifyInstance } from 'fastify';
@@ -15,7 +15,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply) {
-      const source = request.body.query!
+      const query = request.body.query
       // const id = request.body.variables
       const UserType = new GraphQLObjectType({
         name: 'User',
@@ -29,6 +29,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           // posts: { type: new GraphQLScalarType(String) },
           // memberType: { type: new GraphQLScalarType(String) },
         }),
+      })
+
+      const UserInputType = new GraphQLInputObjectType({
+        name: 'UserInput',
+        fields: {
+          firstName: { type: new GraphQLNonNull(GraphQLString)},
+          lastName: { type: new GraphQLNonNull(GraphQLString)},
+          email: { type: new GraphQLNonNull(GraphQLString)},
+        }
       })
 
       const PostType = new GraphQLObjectType({
@@ -73,51 +82,35 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         })
       })
 
-      const AppSchema = new GraphQLSchema({
-        query: QueryRootType
+      const RootMutation = new GraphQLObjectType({
+        name: 'RootMutationType',
+        fields: {
+          createUser: {
+            type: UserType,
+            args: {
+              data: {
+                type: new GraphQLNonNull(UserInputType)
+              }
+            },
+            resolve: async (obj, args, context) => {
+              const data = {...args.data}
+              return await context.db.users.create(data)
+            }
+          },
+        }
       })
-      // const root = {
-      //   getAllUsers: async () => {
-      //     return await this.db.users.findMany()
-      //   },
-      //   getAllProfiles: async () => {
-      //     return await this.db.profiles.findMany()
-      //   },
-      //   getAllPosts: async () => {
-      //     return await this.db.posts.findMany()
-      //   },
-      //   getAllMemberTypes: async () => {
-      //     return await this.db.memberTypes.findMany()
-      //   },
-      //   getUser: async (obj: UserEntity, args: string, context: any, info: any) => {
-      //     return this.db.users.findOne({key: "id", equals: obj.id})
-      //   },
-      //   createUser: async (obj: any, args: any, context: FastifyInstance) => {
-      //     console.log(obj?.input?.firstName) 
-          
-      //     const input: UserEntity = obj.input
 
-      //     const newUser = {
-      //       firstName: input.firstName,
-      //       lastName: input.lastName,
-      //       email: input.email,
-      //     }
-          
-      //     const user = await this.db.users.create(newUser)
-      //     return user
-      //   }
-      // }
-      if(source){
+      const AppSchema = new GraphQLSchema({
+        query: QueryRootType,
+        mutation: RootMutation
+      })
         return await graphql({
-          // schema: gqlSchema,
           schema: AppSchema,
-          source: String(source),
-          // rootValue: root,
+          source: String(query),
           contextValue: fastify,
           variableValues: request.body.variables
         })
       }
-    }
   );
 };
 
