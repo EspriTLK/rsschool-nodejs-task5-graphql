@@ -1,11 +1,12 @@
 import {buildSchema} from 'graphql'
+
 export const gqlSchema = buildSchema(`
 type User {
 	id: String
 	firstName: String
 	lastName: String
 	email: String
-	subscribeToUserIds: [ID]
+	subscribedToUserIds: [String]
 	posts: [Post]
 	profile: Profile
 	memberType: MemberType
@@ -15,11 +16,11 @@ type User {
 	id: ID
 	title: String
 	content: String
-	userId: ID
+	userId: String
   }
 
   type Profile {
-	id: ID
+	id: String
 	avatar: String
 	sex: String
 	birthday: Int
@@ -27,7 +28,7 @@ type User {
 	street: String
 	city: String
 	memberTypeId: String
-	userId: ID
+	userId: String
   }
 
   type MemberType {
@@ -37,7 +38,7 @@ type User {
   }
 
   input UserInput {
-	id: ID
+	id: String
 	firstName: String!
 	lastName: String!
 	email: String!
@@ -45,6 +46,9 @@ type User {
   }
 
   type Query {
+	getAllProfiles: [Profile]
+	getAllPosts: [Post]
+	getAllMemberTypes: [MemberType]
 	getAllUsers: [User]
 	getUser(id: ID): User
   }
