@@ -80,13 +80,6 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           })
           reply.statusCode = 404
           return await this.db.users.delete(id)
-        // } else if(userPosts) {
-        //   userPosts.forEach(async userPost => {
-        //     reply.statusCode = 404
-        //   })
-        // } else if(userProfile){
-        //   await this.db.profiles.delete(id)
-        //   reply.statusCode = 404
         } else {
           reply.statusCode = 404
           return fastify.httpErrors.notFound()
